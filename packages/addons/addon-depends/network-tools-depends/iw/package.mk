@@ -9,12 +9,9 @@ PKG_SITE="http://wireless.kernel.org/en/users/Documentation/iw"
 PKG_URL="https://www.kernel.org/pub/software/network/$PKG_NAME/$PKG_NAME-$PKG_VERSION.tar.xz"
 PKG_DEPENDS_TARGET="toolchain libnl"
 PKG_LONGDESC="A new nl80211 based CLI configuration utility for wireless devices."
+PKG_BUILD_FLAGS="-sysroot"
 # iw fails at runtime with lto enabled
 
 pre_configure_target() {
   export LDFLAGS="$LDFLAGS -pthread"
-}
-
-makeinstall_target() {
-  : # meh
 }

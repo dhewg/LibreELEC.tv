@@ -34,7 +34,8 @@ json_worker() {
     "bootstrap": "${PKG_DEPENDS_BOOTSTRAP}",
     "init": "${PKG_DEPENDS_INIT}",
     "host": "${PKG_DEPENDS_HOST}",
-    "target": "${PKG_DEPENDS_TARGET}"
+    "target": "${PKG_DEPENDS_TARGET}",
+    "unpack": "${PKG_DEPENDS_UNPACK}"
   },
 EOF
   done
@@ -78,6 +79,8 @@ package_worker() {
     fi
   fi
 
+  [ ${result} -eq 0 -a "${AUTOREMOVE}" = "yes" ] && ${SCRIPTS}/autoremove ${pkgname}
+
   (
     flock --exclusive 95
     [ ${result} -eq 0 ] && status="DONE" || status="FAIL"
@@ -115,7 +118,7 @@ start_multithread_build() {
 
   # init thread control folder
   rm -rf "${THREAD_CONTROL}"
-  mkdir -p "${THREAD_CONTROL}/locks"
+  mkdir -p "${THREAD_CONTROL}/locks" "${THREAD_CONTROL}/counts"
   echo -1 >"${THREAD_CONTROL}/progress.prev"
   echo 0 >"${THREAD_CONTROL}/progress"
   echo 0 >"${THREAD_CONTROL}/status.max"
@@ -126,6 +129,7 @@ start_multithread_build() {
 
   # Bootstrap GNU parallel
   MTWITHLOCKS=no $SCRIPTS/build parallel:host 2>&1 || die "Unable to bootstrap parallel package"
+  [ "${AUTOREMOVE}" = "yes" ] && rm -fr $(get_build_dir parallel)
 
   # determine number of available slots for the given THREADCOUNT - optimise logging for single threaded builds
   [ $(seq 1 32 | ${TOOLCHAIN}/bin/parallel --plain --no-notice --max-procs ${THREADCOUNT} echo {%} | sort -n | tail -1) -eq 1 ] && singlethread=yes || singlethread=no
@@ -146,7 +150,7 @@ start_multithread_build() {
 
   cat ${_CACHE_PACKAGE_GLOBAL} ${_CACHE_PACKAGE_LOCAL} | \
     ${TOOLCHAIN}/bin/parallel --plain --no-notice --max-args 30 --halt now,fail=1 json_worker | \
-    ${SCRIPTS}/genbuildplan.py --no-reorder --show-wants --build ${@} > "${THREAD_CONTROL}"/plan || result=1
+    ${SCRIPTS}/genbuildplan.py --no-reorder --show-wants --with-counts "${THREAD_CONTROL}"/counts --build ${@} > "${THREAD_CONTROL}"/plan || result=1
 
   if [ ${result} -eq 0 ]; then
     save_build_config

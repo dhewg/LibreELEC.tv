@@ -19,12 +19,16 @@ class LibreELEC_Package:
         self.wants = []
         self.wantedby = []
 
+        self.unpacks = []
+
     def __repr__(self):
         s = "%-9s: %s" % ("name", self.name)
         s = "%s\n%-9s: %s" % (s, "section", self.section)
 
         for t in self.deps:
             s = "%s\n%-9s: %s" % (s, t, self.deps[t])
+
+        s = "%s\n%-9s: %s" % (s, "UNPACKS", self.unpacks)
 
         s = "%s\n%-9s: %s" % (s, "NEEDS", self.wants)
         s = "%s\n%-9s: %s" % (s, "WANTED BY", self.wantedby)
@@ -54,6 +58,10 @@ class LibreELEC_Package:
         name = package.split(":")[0]
         if name in self.wantedby:
             self.wantedby.remove(name)
+
+    def addUnpack(self, packages):
+        if packages.strip():
+            self.unpacks = packages.strip().split()
 
     def isReferenced(self):
         return False if self.wants == [] else True
@@ -135,6 +143,8 @@ def initPackage(package):
 
     for target in ["bootstrap", "init", "host", "target"]:
         pkg.addDependencies(target, package[target])
+
+    pkg.addUnpack(package["unpack"])
 
     return pkg
 
@@ -242,7 +252,8 @@ def processPackages(args, packages, build):
             "bootstrap": "",
             "init": "",
             "host": " ".join(get_packages_by_target("host", build)),
-            "target": " ".join(get_packages_by_target("target", build))
+            "target": " ".join(get_packages_by_target("target", build)),
+            "unpack": ""
           }
 
     packages[pkg["name"]] = initPackage(pkg)
@@ -328,6 +339,13 @@ def processPackages(args, packages, build):
 
     return node_map
 
+# Recursively increment the reference count of any PKG_DEPENDS_UNPACK packages referenced by the root package
+def countPkgDepends(root, counts):
+  for pkgname in ALL_PACKAGES[root].unpacks:
+      counts[pkgname] = counts.get(pkgname, 0) + 1
+      if ALL_PACKAGES[pkgname].unpacks:
+          countPkgDepends(pkgname, counts)
+
 #---------------------------------------------
 parser = argparse.ArgumentParser(description="Generate package dependency list for the requested build/install packages.    \
                                               Package data will be read from stdin in JSON format.", \
@@ -353,6 +371,9 @@ parser.add_argument("--hide-wants", action="store_false", dest="show_wants", def
 
 parser.add_argument("--ignore-invalid", action="store_true", \
                     help="Ignore invalid packages.")
+
+parser.add_argument("--with-counts", metavar="DIR", \
+                    help="Directory into which package counts will be written")
 
 args = parser.parse_args()
 
@@ -385,3 +406,17 @@ if args.show_wants:
 else:
     for step in steps:
         print("%-7s %s" % (step[0], step[1].replace(":target","")))
+
+if args.with_counts:
+    # count the tasks per package according to the steps
+    counts = {}
+    for task, pkgname in steps:
+        pkgname = pkgname.split(':')[0]
+        counts[pkgname] = counts.get(pkgname, 0) + 1
+        countPkgDepends(pkgname, counts)
+
+    # write the package counts
+    for pkgname in counts:
+        filename = "%s.count" % os.path.join(args.with_counts, pkgname)
+        with open(filename, "w") as out:
+            print("%d" % counts[pkgname], file=out)

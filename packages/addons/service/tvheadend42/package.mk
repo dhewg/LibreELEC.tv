@@ -13,9 +13,11 @@ PKG_URL="https://github.com/tvheadend/tvheadend/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain avahi comskip curl dvb-apps ffmpegx libdvbcsa libhdhomerun \
                     libiconv openssl pngquant:host Python3:host tvh-dtv-scan-tables"
 PKG_DEPENDS_UNPACK="tvh-dtv-scan-tables"
+PKG_DEPENDS_CONFIG="ffmpegx"
 PKG_SECTION="service"
 PKG_SHORTDESC="Tvheadend: a TV streaming server for Linux"
 PKG_LONGDESC="Tvheadend ($PKG_VERSION_NUMBER): is a TV streaming server for Linux supporting DVB-S/S2, DVB-C, DVB-T/T2, IPTV, SAT>IP, ATSC and ISDB-T"
+PKG_BUILD_FLAGS="-sysroot"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="Tvheadend Server 4.2"
@@ -83,7 +85,6 @@ pre_configure_target() {
   rm -rf .$TARGET_NAME
 
 # pass ffmpegx to build
-  PKG_CONFIG_PATH="$(get_install_dir ffmpegx)/usr/local/lib/pkgconfig"
   CFLAGS+=" -I$(get_install_dir ffmpegx)/usr/local/include"
   LDFLAGS+=" -L$(get_install_dir ffmpegx)/usr/local/lib"
 
@@ -96,10 +97,6 @@ pre_configure_target() {
 
 post_make_target() {
   $CC -O -fbuiltin -fomit-frame-pointer -fPIC -shared -o capmt_ca.so src/extra/capmt_ca.c -ldl
-}
-
-makeinstall_target() {
-  :
 }
 
 addon() {

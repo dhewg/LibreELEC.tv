@@ -9,7 +9,5 @@ PKG_SITE="http://argtable.sourceforge.net/"
 PKG_URL="https://downloads.sourceforge.net/project/argtable/argtable/argtable-${PKG_VERSION}/argtable2-${PKG_VERSION:2:4}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"
 PKG_LONGDESC="Argtable is an open source ANSI C library that parses GNU-style command-line options."
-
-make_target() {
-  :
-}
+PKG_TOOLCHAIN="configure"
+PKG_BUILD_FLAGS="-sysroot"

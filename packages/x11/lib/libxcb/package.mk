@@ -13,7 +13,7 @@ PKG_LONGDESC="X C-language Bindings library."
 PKG_BUILD_FLAGS="+pic"
 
 PKG_CONFIGURE_OPTS_TARGET="--enable-static \
-                           --disable-shared \
+                           --enable-shared \
                            --disable-screensaver \
                            --disable-xprint \
                            --disable-selinux \
@@ -25,4 +25,9 @@ pre_configure_target() {
 
   PKG_CONFIG="$PKG_CONFIG --define-variable=pythondir=$PYTHON_TOOLCHAIN_PATH"
   PKG_CONFIG="$PKG_CONFIG --define-variable=xcbincludedir=$SYSROOT_PREFIX/usr/share/xcb"
+}
+
+post_makeinstall_target() {
+  mkdir -p $INSTALL/.noinstall
+  mv $INSTALL/usr/lib/*.so $INSTALL/usr/lib/*.so.* $INSTALL/.noinstall
 }

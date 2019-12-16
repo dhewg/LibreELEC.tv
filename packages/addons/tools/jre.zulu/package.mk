@@ -5,7 +5,7 @@ PKG_NAME="jre.zulu"
 PKG_VERSION="1.0"
 PKG_REV="100"
 PKG_LICENSE="GPL2"
-PKG_DEPENDS_TARGET="jdk-${TARGET_ARCH}-zulu jre-libbluray libXext chrome-libXtst chrome-libXi chrome-libXrender jre-libXinerama"
+PKG_DEPENDS_TARGET="jdk-${TARGET_ARCH}-zulu jre-libbluray libXext libXtst libXi libXrender libXinerama"
 PKG_SECTION="tools"
 PKG_SHORTDESC="Java Runtime Environment 8 for Blu-ray Disc Java menus from Azul Systems."
 PKG_LONGDESC="$PKG_SHORTDESC"
@@ -30,10 +30,10 @@ addon() {
     $ADDON_BUILD/$PKG_ADDON_ID
 
   # copy required libraries for JRE
-  _pkg_copy_lib libXtst $(get_build_dir chrome-libXtst)/.$TARGET_NAME/src/.libs
-  _pkg_copy_lib libXi $(get_build_dir chrome-libXi)/.$TARGET_NAME/src/.libs
-  _pkg_copy_lib libXrender $(get_build_dir chrome-libXrender)/.$TARGET_NAME/src/.libs
-  _pkg_copy_lib libXinerama $(get_build_dir jre-libXinerama)/.$TARGET_NAME/src/.libs
+  _pkg_copy_lib libXtst $(get_install_dir libXtst)/.noinstall
+  _pkg_copy_lib libXi $(get_install_dir libXi)/.noinstall
+  _pkg_copy_lib libXrender $(get_install_dir libXrender)/.noinstall
+  _pkg_copy_lib libXinerama $(get_install_dir libXinerama)/.noinstall
 
   if [ "$TARGET_ARCH" = "arm" ]; then
     _pkg_copy_lib libX11 $(get_build_dir libX11)/.$TARGET_NAME/src/.libs

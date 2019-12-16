@@ -5,7 +5,8 @@ PKG_NAME="jre.zulu"
 PKG_VERSION="1.0"
 PKG_REV="100"
 PKG_LICENSE="GPL2"
-PKG_DEPENDS_TARGET="jdk-${TARGET_ARCH}-zulu jre-libbluray libXext libXtst libXi libXrender libXinerama"
+PKG_DEPENDS_TARGET="jre-libbluray libXext libXtst libXi libXrender libXinerama"
+PKG_DEPENDS_UNPACK="jdk-${TARGET_ARCH}-zulu"
 PKG_SECTION="tools"
 PKG_SHORTDESC="Java Runtime Environment 8 for Blu-ray Disc Java menus from Azul Systems."
 PKG_LONGDESC="$PKG_SHORTDESC"
@@ -25,7 +26,7 @@ addon() {
   mkdir -p $ADDON_BUILD/$PKG_ADDON_ID/lib
 
   cp -a $(get_build_dir jdk-${TARGET_ARCH}-zulu)/jre \
-        $(get_build_dir jre-libbluray)/.$TARGET_NAME/.libs/*.jar \
+        $(get_install_dir jre-libbluray)/usr/share/java/*.jar \
         ${PKG_DIR}/profile.d \
     $ADDON_BUILD/$PKG_ADDON_ID
 
@@ -36,7 +37,7 @@ addon() {
   _pkg_copy_lib libXinerama $(get_install_dir libXinerama)/.noinstall
 
   if [ "$TARGET_ARCH" = "arm" ]; then
-    _pkg_copy_lib libX11 $(get_build_dir libX11)/.$TARGET_NAME/src/.libs
-    _pkg_copy_lib libXext $(get_build_dir libXext)/.$TARGET_NAME/src/.libs
+    _pkg_copy_lib libX11 $(get_install_dir libX11)/usr/lib
+    _pkg_copy_lib libXext $(get_install_dir libXext)/usr/lib
   fi
 }

@@ -31,6 +31,7 @@ json_worker() {
     "name": "${PKG_NAME}",
     "hierarchy": "${hierarchy}",
     "section": "${PKG_SECTION}",
+    "path": "${pkgpath}",
     "bootstrap": "${PKG_DEPENDS_BOOTSTRAP}",
     "init": "${PKG_DEPENDS_INIT}",
     "host": "${PKG_DEPENDS_HOST}",

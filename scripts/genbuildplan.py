@@ -158,9 +158,10 @@ class NinjaWriter(object):
         self.output.close()
 
 class LibreELEC_Package:
-    def __init__(self, name, section):
+    def __init__(self, name, section, path):
         self.name = name
         self.section = section
+        self.path = path
         self.deps = {"bootstrap": [],
                      "init":      [],
                      "host":      [],
@@ -288,7 +289,7 @@ def loadPackages():
 
 # Create a fully formed LibreELEC_Package object
 def initPackage(package):
-    pkg = LibreELEC_Package(package["name"], package["section"])
+    pkg = LibreELEC_Package(package["name"], package["section"], package["path"])
 
     for target in ["bootstrap", "init", "host", "target"]:
         pkg.addDependencies(target, package[target])
@@ -398,6 +399,7 @@ def processPackages(args, packages, build):
             "name": ROOT_PKG,
             "section": "virtual",
             "hierarchy": "global",
+            "path": "",
             "bootstrap": "",
             "init": "",
             "host": " ".join(get_packages_by_target("host", build)),

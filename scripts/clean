@@ -33,7 +33,7 @@ clean_package() {
       fi
     fi
   done
-  rm -f "${STAMPS}/${1}/build_"*
+  rm -f "${STAMPS}/${1}/build_"* "${STAMPS_INSTALL}/${1}/install_"*
 }
 
 if [ "${1}" = "--all" -a -n "${2}" ]; then

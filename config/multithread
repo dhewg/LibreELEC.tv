@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
-THREADCOUNT=${THREADCOUNT:-100%}
+[ -z "${THREADCOUNT}" ] && THREADCOUNT=$(getconf _NPROCESSORS_ONLN)
 
 # This function is passed a list of package.mk paths to be processed.
 # Each package.mk is sourced with relevant variables output in JSON format.
@@ -115,7 +115,7 @@ EOF
 export -f package_worker
 
 start_multithread_build() {
-  local singlethread buildopts result=0
+  local result=0
 
   # init thread control folder
   rm -rf "${THREAD_CONTROL}"
@@ -132,20 +132,6 @@ start_multithread_build() {
   MTWITHLOCKS=no $SCRIPTS/build parallel:host 2>&1 || die "Unable to bootstrap parallel package"
   [ "${AUTOREMOVE}" = "yes" ] && rm -fr $(get_build_dir parallel)
 
-  # determine number of available slots for the given THREADCOUNT - optimise logging for single threaded builds
-  [ $(seq 1 32 | ${TOOLCHAIN}/bin/parallel --plain --no-notice --max-procs ${THREADCOUNT} echo {%} | sort -n | tail -1) -eq 1 ] && singlethread=yes || singlethread=no
-
-  # create a single log file by default for a single threaded build (or the builder is a masochist)
-  if [ "${singlethread}" = "yes" -a "${ONELOG,,}" != "no" ] || [ "${ONELOG,,}" = "yes" ]; then
-    buildopts+=" --ungroup"
-  else
-    mkdir -p "${THREAD_CONTROL}/logs"
-    buildopts+=" --group --results ${THREAD_CONTROL}/logs/{#}/"
-  fi
-
-  # When building addons, don't halt on error - keep building all packages/addons
-  [ "${MTADDONBUILD}" = "yes" ] && buildopts+=" --halt never" || buildopts+=" --halt now,fail=1"
-
   # pipefail: return value of a pipeline is the value of the last (rightmost) command to exit with a non-zero status
   set -o pipefail
 
@@ -157,10 +143,8 @@ start_multithread_build() {
   if [ ${result} -eq 0 ]; then
     save_build_config
 
-    cat "${THREAD_CONTROL}"/plan | awk '{print $1 " " $2}' | \
-      MTBUILDSTART=$(date +%s) MTWITHLOCKS=yes ${TOOLCHAIN}/bin/parallel \
-        --plain --no-notice --max-procs ${THREADCOUNT} --joblog="${THREAD_CONTROL}/joblog" --plus ${buildopts} \
-        package_worker {%} {#} {##} {} || result=1
+    MTBUILDSTART=$(date +%s) MTWITHLOCKS=no ninja -C "${THREAD_CONTROL}" -j${THREADCOUNT}
+    result=$?
 
     rm -f "${THREAD_CONTROL}/parallel.pid"
   fi

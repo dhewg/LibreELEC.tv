@@ -149,9 +149,10 @@ start_multithread_build() {
   # pipefail: return value of a pipeline is the value of the last (rightmost) command to exit with a non-zero status
   set -o pipefail
 
+  mkdir -p "${THREAD_CONTROL}/logs"
   cat ${_CACHE_PACKAGE_GLOBAL} ${_CACHE_PACKAGE_LOCAL} | \
     ${TOOLCHAIN}/bin/parallel --plain --no-notice --max-args 30 --halt now,fail=1 json_worker | \
-    ${SCRIPTS}/genbuildplan.py --no-reorder --show-wants --with-counts "${THREAD_CONTROL}"/counts --build ${@} > "${THREAD_CONTROL}"/plan || result=1
+    ROOT="${ROOT}" STAMPS="${STAMPS}" STAMPS_INSTALL="${STAMPS_INSTALL}" LOGS="${THREAD_CONTROL}/logs" ${SCRIPTS}/genbuildplan.py --no-reorder --show-wants --with-counts "${THREAD_CONTROL}"/counts --with-ninja "${THREAD_CONTROL}"/build.ninja --build ${@} > "${THREAD_CONTROL}"/plan || result=1
 
   if [ ${result} -eq 0 ]; then
     save_build_config

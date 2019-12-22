@@ -93,15 +93,18 @@ build-programs=yes
 EOF
 
   # binaries to install into target
-  GLIBC_INCLUDE_BIN="getent ldd locale"
-
-  # Generic "installer" needs localedef to define drawing chars
-  if [ "$PROJECT" = "Generic" ]; then
-    GLIBC_INCLUDE_BIN+=" localedef"
-  fi
+  GLIBC_INCLUDE_BIN="getent ldd locale localedef"
 }
 
 post_makeinstall_target() {
+  mkdir -p $INSTALL/.noinstall
+    cp -p $INSTALL/usr/bin/localedef $INSTALL/.noinstall
+
+  # Generic "installer" needs localedef to define drawing chars
+  if [ "$PROJECT" != "Generic" ]; then
+    rm $INSTALL/usr/bin/localedef
+  fi
+
 # we are linking against ld.so, so symlink
   ln -sf $(basename $INSTALL/usr/lib/ld-*.so) $INSTALL/usr/lib/ld.so
 

@@ -1508,8 +1508,6 @@ update_dashboard() {
 # Thread concurrency helpers to avoid concurrency issues with some code,
 # eg. when Python installs directly into $TOOLCHAIN.
 acquire_exclusive_lock() {
-  [ "${MTWITHLOCKS}" != "yes" ] && return 0
-
   local pkg="$1" task="$2" lockfile="${3:-global}"
   local this_job="${MTJOBID}"
   local lock_job lock_seq lock_task lock_pkg locked=no idwidth
@@ -1533,8 +1531,6 @@ acquire_exclusive_lock() {
 }
 
 release_exclusive_lock() {
-  [ "${MTWITHLOCKS}" != "yes" ] && return 0
-
   local pkg="$1" task="$2" lockfile="${3:-global}"
 
   pkg_lock_status "ACTIVE" "${pkg}" "${task}"

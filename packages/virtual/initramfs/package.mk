@@ -25,6 +25,13 @@ for i in $PKG_DEPENDS_INIT; do
 done
 
 post_install() {
+  rm -rf $BUILD/initramfs
+  rm -f ${STAMPS_INSTALL}/*/install_init
+
+  for i in $PKG_DEPENDS_INIT; do
+    $SCRIPTS/install --nonrecursive $i
+  done
+
   ( cd $BUILD/initramfs
     if [ "$TARGET_ARCH" = "x86_64" ]; then
       ln -sfn /usr/lib $BUILD/initramfs/lib64

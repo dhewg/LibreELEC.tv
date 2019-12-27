@@ -4,10 +4,10 @@
 # Copyright (C) 2009-2016 Stephan Raue (stephan@openelec.tv)
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
-. config/options "${1}"
-
-if [ -z "${1}" ]; then
-  die "usage: ${0} package_name[:<host|target|init|bootstrap>] [parent_pkg]"
+RECURSIVE="yes"
+if [ "${1}" = "--nonrecursive" ]; then
+  RECURSIVE="no"
+  shift
 fi
 
 if [ "${1}" = "--all" ]; then
@@ -18,6 +18,12 @@ if [ "${1}" = "--all" ]; then
   fi
   exit 0
 fi
+
+if [ -z "${1}" ]; then
+  die "usage: ${0} package_name[:<host|target|init|bootstrap>] [parent_pkg]"
+fi
+
+. config/options "${1}"
 
 if [ -z "${PKG_NAME}" ]; then
   die "$(print_color CLR_ERROR "${1}: no package.mk file found")"
@@ -55,17 +61,19 @@ fi
 
 ${SCRIPTS}/unpack "${PKG_NAME}" "${PARENT_PKG}"
 
-# build dependencies, only when PKG_DEPENDS_? is filled
-unset _pkg_depends
-case "${TARGET}" in
-  "target") _pkg_depends="${PKG_DEPENDS_TARGET}";;
-  "host") _pkg_depends="${PKG_DEPENDS_HOST}";;
-  "init") _pkg_depends="${PKG_DEPENDS_INIT}";;
-  "bootstrap") _pkg_depends="${PKG_DEPENDS_BOOTSTRAP}";;
-esac
-for p in ${_pkg_depends}; do
-  ${SCRIPTS}/build "${p}" "${PARENT_PKG}"
-done
+if [ "${RECURSIVE}" = "yes" ]; then
+  # build dependencies, only when PKG_DEPENDS_? is filled
+  unset _pkg_depends
+  case "${TARGET}" in
+    "target") _pkg_depends="${PKG_DEPENDS_TARGET}";;
+    "host") _pkg_depends="${PKG_DEPENDS_HOST}";;
+    "init") _pkg_depends="${PKG_DEPENDS_INIT}";;
+    "bootstrap") _pkg_depends="${PKG_DEPENDS_BOOTSTRAP}";;
+  esac
+  for p in ${_pkg_depends}; do
+    ${SCRIPTS}/build "${p}" "${PARENT_PKG}"
+  done
+fi
 
 # virtual packages are not built as they only contain dependencies, so dont go further here
 if [ "${PKG_SECTION}" = "virtual" ]; then
